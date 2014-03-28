@@ -28,6 +28,7 @@ var Mediawiki = {};
 
     var contribs_people = null, contribs_people_quarters = null;
     var contribs_companies = null, contribs_companies_quarters = null;
+    var contribs_permit = null, contribs_permit_quarters = null;
     var new_people = null, new_people_activity = null, people_leaving = null;
     var gone_people = null;
     var people_intake = null, people_top_all = null;
@@ -52,6 +53,10 @@ var Mediawiki = {};
             contribs_data = contribs_people;
         else if (type === "people" && quarters) 
             contribs_data = contribs_people_quarters;
+        else if (type === "permit" && !quarters) 
+            contribs_data = contribs_permit;
+        else if (type === "permit" && quarters) 
+            contribs_data = contribs_permit_quarters;
         return contribs_data;
     };
 
@@ -65,6 +70,10 @@ var Mediawiki = {};
             filename = Report.getDataDir()+"/scr-people-all.json";
         else if (type === "people" && quarters)
             filename = Report.getDataDir()+"/scr-people-quarters.json";
+        else if (type === "permit" && !quarters)
+            filename = Report.getDataDir()+"/scr-permit-quarters.json";
+        else if (type === "permit" && quarters)
+            filename = Report.getDataDir()+"/scr-permit-quarters.json";
         return filename;    
     };
 
@@ -73,6 +82,8 @@ var Mediawiki = {};
         if (type === "people" && quarters) contribs_people_quarters = data;
         if (type === "companies" && !quarters) contribs_companies = data;
         if (type === "companies" && quarters) contribs_companies_quarters = data;
+        if (type === "permit" && !quarters) contribs_permit = data;
+        if (type === "permit" && quarters) contribs_permit_quarters = data;
     };
 
 
@@ -102,6 +113,10 @@ var Mediawiki = {};
         var html = "", table = "";
 
         table += "<table class='table table-hover'>";
+        if (type === "permit") {
+            table += "<tr><th>Name</th><th>Total</th><th>Changed By</th><th>Company Id</th><th>Company Name</th></tr>";
+
+        }
         var id, name, total;
         for (var i = 0; i<contribs_data.id.length;i++) {
            name = contribs_data.name[i];
@@ -112,9 +127,16 @@ var Mediawiki = {};
                table += "<a href='people.html?id="+id+"&name="+name+"'>";
            if (type === "companies" && show_links)
                table += "<a href='company.html?company="+name+"'>";
+           if (type === "permit" && show_links)
+               table += "<a href='people.html?id="+id+"&name="+name+"'>";
            table += name;
            if (show_links) table += "</a>";
            table += "</td><td>"+total;
+           if (type === "permit") {
+                table += "</td><td>"+contribs_data.changed_by[i];
+                table += "</td><td>"+contribs_data.company_id[i];
+                table += "</td><td>"+contribs_data.company_name[i];
+           }
            table += "</td></tr>";
         }
         table += "</table>";
@@ -157,12 +179,16 @@ var Mediawiki = {};
         $.when($.getJSON(Mediawiki.getContribsFile('people',false)),
                $.getJSON(Mediawiki.getContribsFile('people',true)),
                $.getJSON(Mediawiki.getContribsFile('companies',false)),
-               $.getJSON(Mediawiki.getContribsFile('companies',true))
-            ).done(function(ppl, ppl_quarters, comp, comp_quarters) {
+               $.getJSON(Mediawiki.getContribsFile('companies',true)),
+               $.getJSON(Mediawiki.getContribsFile('permit',false)),
+               $.getJSON(Mediawiki.getContribsFile('permit',true))
+            ).done(function(ppl, ppl_quarters, comp, comp_quarters, perm, perm_quarters) {
                 Mediawiki.setContribs ('people', false, ppl[0]);
                 Mediawiki.setContribs ('people', true, ppl_quarters[0]);
                 Mediawiki.setContribs ('companies', false, comp[0]);
                 Mediawiki.setContribs ('companies', true, comp_quarters[0]);
+                Mediawiki.setContribs ('permit', false, perm[0]);
+                Mediawiki.setContribs ('permit', true, perm_quarters[0]);
                 cb();
         });
     }
